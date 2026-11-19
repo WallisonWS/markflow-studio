@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarkFlow Studio — Split Markdown Editor, ATS Resume &amp; README Builder</title>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Inter',system-ui,sans-serif; background:#090d16; color:#f1f5f9; height:100vh; display:flex; flex-direction:column; }
+    .bar { padding:12px 20px; background:#101727; border-bottom:1px solid #22304a; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+    .bar h1 { font-size:1.08rem; font-weight:800; display:flex; align-items:center; gap:8px; }
+    .controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .btn { background:#1e293b; border:1px solid #334155; color:#f8fafc; padding:6px 12px; border-radius:7px; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:none; }
+    .btn-primary { background:linear-gradient(135deg,#f59e0b,#ef4444); border:none; color:#fff; }
+    .editor-grid { flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0; }
+    textarea { width:100%; height:100%; background:#070a12; color:#e2e8f0; border:none; border-right:1px solid #22304a; padding:22px; font-family:Consolas,'Fira Code',monospace; font-size:0.88rem; line-height:1.65; resize:none; outline:none; }
+    .preview { padding:26px 32px; overflow-y:auto; background:#0d1322; line-height:1.7; }
+    .preview h1 { font-size:1.75rem; border-bottom:1px solid #22304a; padding-bottom:8px; margin-bottom:14px; color:#fff; }
+    .preview h2 { font-size:1.25rem; margin:20px 0 8px; color:#fcd34d; }
+    .preview h3 { font-size:1.05rem; margin:16px 0 6px; color:#7dd3fc; }
+    .preview p { margin-bottom:10px; color:#cbd5e1; }
+    .preview ul { margin:8px 0 12px 22px; color:#cbd5e1; }
+    .preview code { background:#1e293b; padding:2px 6px; border-radius:5px; font-family:Consolas,monospace; font-size:0.84em; color:#38bdf8; }
+    .preview pre { background:#060911; border:1px solid #22304a; padding:14px; border-radius:9px; overflow-x:auto; margin:12px 0; }
+    .preview pre code { background:none; padding:0; color:#e2e8f0; }
+    .preview blockquote { border-left:3px solid #f59e0b; padding-left:14px; color:#94a3b8; margin:12px 0; font-style:italic; }
+    .status { padding:6px 20px; background:#0b101d; border-top:1px solid #22304a; font-size:0.76rem; color:#94a3b8; display:flex; justify-content:space-between; }
+    @media print {
+      .bar, textarea, .status { display:none !important; }
+      body, .preview { background:#fff !important; color:#111 !important; height:auto !important; overflow:visible !important; }
+      .editor-grid { display:block !important; }
+      .preview h1, .preview h2, .preview h3, .preview p, .preview ul { color:#111 !important; }
+    }
+    @media (max-width:800px) { .editor-grid { grid-template-columns:1fr; grid-template-rows:1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <h1>📝 MarkFlow Studio <span style="font-size:0.7rem;background:rgba(245,158,11,0.2);color:#fbbf24;padding:2px 8px;border-radius:999px;">Markdown • Resume • PDF</span></h1>
+    <div class="controls">
+      <button class="btn" onclick="loadTpl('resume')">📄 ATS Resume</button>
+      <button class="btn" onclick="loadTpl('readme')">🚀 GitHub README</button>
+      <button class="btn" onclick="loadTpl('rfc')">🏗️ Architecture RFC</button>
+      <button class="btn" onclick="downloadMd()">⬇️ .MD</button>
+      <button class="btn" onclick="downloadHtml()">⬇️ .HTML</button>
+      <button class="btn btn-primary" onclick="window.print()">🖨️ Export PDF</button>
+      <a href="https://github.com/WallisonWS/markflow-studio" target="_blank" class="btn">⭐ GitHub</a>
+    </div>
+  </div>
+
+  <div class="editor-grid">
+    <textarea id="mdIn" spellcheck="false"></textarea>
+    <div class="preview" id="mdOut"></div>
+  </div>
+
+  <div class="status">
+    <span id="statsTxt">0 words • 0 chars • ~1 min read</span>
+    <span>Auto-saved locally • Zero Tracking • By @WallisonWS</span>
+  </div>
+
+  <script>
+    const TEMPLATES = {
+      resume: `# Jane Doe — Senior Software & Cloud Engineer
+**Location:** Remote / São Paulo, BR | **GitHub:** github.com/username | **Email:** jane@example.com
+
+> Results-driven engineer with 6+ years building high-availability APIs, Zero-Trust cloud infrastructure, and open-source developer tools.
+
+## Experience
+### Staff Software Engineer — CloudScale Corp (2023 – Present)
+- Architected multi-region API gateway handling **45k req/sec** with **99.99% SLO** availability.
+- Reduced cloud infrastructure spend by **34%** via Go microservices and CIS-hardened containers.
+- Built automated security scanning pipeline catching **100%** of leaked secrets pre-merge.
+
+### Software Engineer — FinTech Labs (2020 – 2023)
+- Shipped Flutter & TypeScript web platforms serving **250k+ active users**.
+- Designed PostgreSQL indexing strategy reducing p99 query latency from 620ms to 38ms.
+
+## Technical Skills
+- **Languages:** TypeScript, Python, Go, Dart, SQL
+- **Cloud & Security:** Docker, Terraform, Prometheus, Linux, Zero-Trust Networking`,
+
+      readme: `# ⚡ Project Name — Modern Open-Source Tool
+> Short, punchy one-liner explaining the exact problem your project solves.
+
+## ✨ Key Features
+- **Fast & Zero-Dependency:** Runs out of the box with zero configuration.
+- **Privacy-First:** 100% client-side execution.
+- **Cross-Platform:** Linux, macOS, Windows & Web.
+
+## 🚀 Quick Start
+\`\`\`bash
+git clone https://github.com/username/project.git
+cd project && npm start
+\`\`\`
+
+## 🤝 Contributing
+Pull requests are welcome! Star the repository if this saved you time.`,
+
+      rfc: `# RFC-042: Zero-Trust Micro-Segmentation Architecture
+**Author:** Engineering Team | **Status:** Proposed
+
+## 1. Context & Problem Statement
+Flat corporate networks allow lateral movement after a single endpoint compromise.
+
+## 2. Proposed Solution
+- Isolate IoT & CFTV devices into dedicated **VLAN 99** with explicit WAN deny rules.
+- Enforce **mTLS / SSL-VPN** for administrative access.
+- Stream firewall telemetry into centralized SIEM with automated IP threat blocklists.
+
+## 3. Rollout & SLO Impact
+Target availability: \`99.95%\` (Error Budget: 21.6 min/month).`
+    };
+
+    function mdToHtml(md) {
+      let html = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+      html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+      html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
+      return html.split(/\n\n+/).map(b => b.startsWith('<') ? b : `<p>${b.replace(/\n/g, '<br/>')}</p>`).join('\n');
+    }
+
+    const mdIn = document.getElementById('mdIn');
+    function render() {
+      const val = mdIn.value;
+      localStorage.setItem('markflow_doc', val);
+      document.getElementById('mdOut').innerHTML = mdToHtml(val);
+      const words = val.trim() ? val.trim().split(/\s+/).length : 0;
+      document.getElementById('statsTxt').textContent = `${words} words • ${val.length} chars • ~${Math.max(1, Math.ceil(words / 200))} min read`;
+    }
+    window.loadTpl = (k) => { mdIn.value = TEMPLATES[k]; render(); };
+    window.downloadMd = () => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([mdIn.value], { type: 'text/markdown' }));
+      a.download = 'document.md'; a.click();
+    };
+    window.downloadHtml = () => {
+      const doc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:system-ui;max-width:820px;margin:40px auto;padding:0 20px;line-height:1.7;color:#111;}pre{background:#f3f4f6;padding:14px;border-radius:8px;}</style></head><body>${document.getElementById('mdOut').innerHTML}</body></html>`;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([doc], { type: 'text/html' }));
+      a.download = 'document.html'; a.click();
+    };
+
+    mdIn.addEventListener('input', render);
+    mdIn.value = localStorage.getItem('markflow_doc') || TEMPLATES.resume;
+    render();
+  </script>
+</body>
+</html>
